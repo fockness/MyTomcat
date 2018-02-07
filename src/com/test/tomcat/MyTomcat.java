@@ -15,7 +15,6 @@ import com.test.concurrent.ThreadPool;
 /*
  * 你能够看到Tomcat的处理流程：把URL对应处理的Servlet关系形成，解析HTTP协议，封装请求/响应对象，利用反射实例化具体的Servlet进行处理即可。
  * 
- * 手写完线程池后并发访问测试
  */
 public class MyTomcat {
 
