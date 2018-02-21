@@ -10,6 +10,8 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.nio.sctp.HandlerResult;
+import com.test.concurrent.Handler;
 import com.test.concurrent.ThreadPool;
 
 /*
@@ -28,7 +30,7 @@ public class MyTomcat {
 	
 	//url---class(服务器启动成功后会解析WEB.XML文件并将其放入HashMap中,待到客户端有访问时取出访问路径去HashMap中寻找对应的class反射创建,将请求转发过去)
 	private Map<String, String> urlClassMap = new HashMap<String, String>();
-	private ThreadPool pool = new ThreadPool(POOL_SIZE, maxNoOfTasks);
+	private ThreadPool pool = new ThreadPool(POOL_SIZE, maxNoOfTasks, Handler.AbortPolicy);
 	
 	public MyTomcat(int port){
 		this.port = port;

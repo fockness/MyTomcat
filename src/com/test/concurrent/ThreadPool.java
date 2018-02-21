@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
+
+import javax.management.RuntimeErrorException;
 
 
 public class ThreadPool {
@@ -22,13 +25,17 @@ public class ThreadPool {
 	
 	private static int CURRENT_THREADS = 0;//当前的线程池内的线程数
 	
+	private static Handler handler = null;//拒绝策略
+	
 	public ThreadPool(){
-		this(INIT_THREADS, INIT_QUEUE_NUMS);
+		//拒绝策略默认采用AbortPolicy
+		this(INIT_THREADS, INIT_QUEUE_NUMS, Handler.AbortPolicy);
 	}
 	
-	public ThreadPool(int noOfThreads, int maxNoOfTasks){
+	public ThreadPool(int noOfThreads, int maxNoOfTasks, Handler handler){
 		this.INIT_THREADS = noOfThreads;
 		this.INIT_QUEUE_NUMS = maxNoOfTasks;
+		this.handler = handler;
 		takeQueue = new BlockingQueue<Runnable>(INIT_QUEUE_NUMS);
 		for(int i=0; i<INIT_THREADS; i++){
 			threads.add(new PoolThread(takeQueue));
@@ -41,8 +48,8 @@ public class ThreadPool {
 	public synchronized void execute(Runnable task){
 		if(this.isStoped) throw new IllegalStateException();
 		
-		//当前的线程数大于线程池允许的最大数量，则采用AbortPolicy()策略
-		if(CURRENT_THREADS >= MAX_THREADS && AbortPolicy());
+		//当前的线程数大于线程池允许的最大数量，默认采用AbortPolicy()策略
+		if(CURRENT_THREADS >= MAX_THREADS && handler());
 		
 		try {
 			CURRENT_THREADS++;
@@ -51,8 +58,23 @@ public class ThreadPool {
 			e.printStackTrace();
 		}
 	}
+	
+	public boolean handler(){
+		switch (handler) {
+		case DiscardOldestPolicy:
+			return discardOldestPolicy();
+		default:
+			return abortPolicy();
+		}
+	}
+	
+	//抛异常
+	private boolean abortPolicy() {
+		throw new RuntimeException("线程池数量已满");
+	}
 
-	private boolean AbortPolicy() {
+	//丢弃队列中最老的任务
+	private boolean discardOldestPolicy() {
 		return this.takeQueue.reduceQueue();
 	}
 

@@ -39,8 +39,6 @@ public class BlockingQueue<T> {
 	}
 	
 	public boolean reduceQueue(){
-		//默认将排在队列中最久的一个任务也就是队列第一个任务抛弃
 		return queue.remove(index) != null;
-		
 	}
 }
