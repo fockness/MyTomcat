@@ -102,9 +102,7 @@ public class ServletContainer {
 	    String WEB_INFO_DIRECTORY_PATH = rootFile.getParent() + "/";  
 	    File webInfoDir = new File(WEB_INFO_DIRECTORY_PATH);  
 	    String SERVLET_CONTEXT_PATH = webInfoDir.getParent() + "/";  
-	  
-	               //这里 SERVLET_CONTEXT_PATH 就是WebRoot的路径  
-	  
+	    //这里 SERVLET_CONTEXT_PATH 就是WebRoot的路径  
 	    String path = SERVLET_CONTEXT_PATH + DEFAULT_WEBXML_LOCATION;  
 	    path = path.replaceAll("%20", " ");
 	    return new File(path);  

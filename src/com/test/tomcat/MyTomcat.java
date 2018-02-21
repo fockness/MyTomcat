@@ -13,7 +13,7 @@ import java.util.Map;
 import com.test.concurrent.ThreadPool;
 
 /*
- * 你能够看到Tomcat的处理流程：把URL对应处理的Servlet关系形成，解析HTTP协议，封装请求/响应对象，利用反射实例化具体的Servlet进行处理即可。
+ * 处理流程：把URL对应处理的Servlet关系形成，解析HTTP协议，封装请求/响应对象，利用反射实例化具体的Servlet进行处理即可。
  * 
  */
 public class MyTomcat {
@@ -22,10 +22,11 @@ public class MyTomcat {
 	private int port = 8080;
 	//线程池内初始工作线程的数目
 	private static final int POOL_SIZE = 5;
+	
 	//线程池内初始阻塞队列长度
 	private static final int maxNoOfTasks = 5;
 	
-	//url---class(服务器启动成功后会解析WEB.XML文件并将其放入hashmap中,待到客户端有访问时取出访问路径去hashmap中寻找对应的class反射创建,将请求转发过去)
+	//url---class(服务器启动成功后会解析WEB.XML文件并将其放入HashMap中,待到客户端有访问时取出访问路径去HashMap中寻找对应的class反射创建,将请求转发过去)
 	private Map<String, String> urlClassMap = new HashMap<String, String>();
 	private ThreadPool pool = new ThreadPool(POOL_SIZE, maxNoOfTasks);
 	
@@ -36,7 +37,7 @@ public class MyTomcat {
 	public void start(){
 		/*	
 		 * 初始化url与对应处理的servlet的关系
-		 * 这个方法用来解析XML并将映射关系放入hashmap中
+		 * 这个方法用来解析XML并将映射关系放入HashMap中
 		 */
 		initServletMapping();
 		ServerSocket serverSocket = null;
