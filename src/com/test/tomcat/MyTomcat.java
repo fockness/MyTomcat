@@ -22,6 +22,7 @@ public class MyTomcat {
 
 	//tomcat启动默认端口号
 	private int port = 8080;
+	
 	//线程池内初始工作线程的数目
 	private static final int POOL_SIZE = 5;
 	
@@ -30,13 +31,18 @@ public class MyTomcat {
 	
 	//url---class(服务器启动成功后会解析WEB.XML文件并将其放入HashMap中,待到客户端有访问时取出访问路径去HashMap中寻找对应的class反射创建,将请求转发过去)
 	private Map<String, String> urlClassMap = new HashMap<String, String>();
-	private ThreadPool pool = new ThreadPool(POOL_SIZE, maxNoOfTasks, Handler.AbortPolicy);
+	
+	private ThreadPool pool = null;
 	
 	public MyTomcat(int port){
 		this.port = port;
 	}
 	
 	public void start(){
+		
+		//采用线程安全的单例模式获取线程池实例
+		pool = ThreadPool.newInstance(POOL_SIZE, maxNoOfTasks, Handler.AbortPolicy);
+		
 		/*	
 		 * 初始化url与对应处理的servlet的关系
 		 * 这个方法用来解析XML并将映射关系放入HashMap中

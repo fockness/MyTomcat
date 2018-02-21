@@ -27,12 +27,28 @@ public class ThreadPool {
 	
 	private static Handler handler = null;//拒绝策略
 	
-	public ThreadPool(){
-		//拒绝策略默认采用AbortPolicy
-		this(INIT_THREADS, INIT_QUEUE_NUMS, Handler.AbortPolicy);
+	private static ThreadPool pool = null;
+	
+	//采用线程安全的单例模式获取线程池实例
+	public static ThreadPool newInstance(){
+		return newInstance(INIT_THREADS, INIT_QUEUE_NUMS, Handler.AbortPolicy);
 	}
 	
-	public ThreadPool(int noOfThreads, int maxNoOfTasks, Handler handler){
+	public static ThreadPool newInstance(int noOfThreads, int maxNoOfTasks, Handler handler){
+		synchronized (ThreadPool.class) {
+			if(pool == null){
+				pool = new ThreadPool(noOfThreads, maxNoOfTasks, handler); 
+			}
+		}
+		return pool;
+	}
+	
+//	private ThreadPool(){
+//		//拒绝策略默认采用AbortPolicy
+//		this(INIT_THREADS, INIT_QUEUE_NUMS, Handler.AbortPolicy);
+//	}
+	
+	private ThreadPool(int noOfThreads, int maxNoOfTasks, Handler handler){
 		this.INIT_THREADS = noOfThreads;
 		this.INIT_QUEUE_NUMS = maxNoOfTasks;
 		this.handler = handler;
