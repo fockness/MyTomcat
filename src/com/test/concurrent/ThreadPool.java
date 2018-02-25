@@ -13,13 +13,13 @@ public class ThreadPool {
 
 	private BlockingQueue<Runnable> takeQueue = null;
 	
-	private List<PoolThread> threads = new ArrayList<PoolThread>();
+	private List<WorkThread> threads = new ArrayList<WorkThread>();
 	
 	private boolean isStoped = false;
 	
 	private int MAX_THREADS = 100;//默认的tomcat最大并发量
 	
-	private static int INIT_THREADS = 10;//默认的tomcat初始化线程量
+	private static int INIT_THREADS = 10;//默认的tomcat初始化线程量,即corePoolSize
 	
 	private static int INIT_QUEUE_NUMS = 10;//默认的任务队列初始化长度
 	
@@ -29,7 +29,7 @@ public class ThreadPool {
 	
 	private static ThreadPool pool = null;
 	
-	//采用线程安全的单例模式获取线程池实例
+	//采用线程安全的懒汉单例模式获取线程池实例
 	public static ThreadPool newInstance(){
 		return newInstance(INIT_THREADS, INIT_QUEUE_NUMS, Handler.AbortPolicy);
 	}
@@ -54,25 +54,22 @@ public class ThreadPool {
 		this.handler = handler;
 		takeQueue = new BlockingQueue<Runnable>(INIT_QUEUE_NUMS);
 		for(int i=0; i<INIT_THREADS; i++){
-			threads.add(new PoolThread(takeQueue));
+			threads.add(new WorkThread(takeQueue));
+			CURRENT_THREADS++;
 		}
-		for(PoolThread thread : threads){
+		for(WorkThread thread : threads){
 			thread.start();
 		}
 	}
 	
 	public synchronized void execute(Runnable task){
 		if(this.isStoped) throw new IllegalStateException();
-		
+		//当前线程数小于核心线程数，则再创建一个线程
+		if(CURRENT_THREADS < INIT_THREADS && addOneThread());
+	    //当前线程数等于核心线程数，新任务会被放入阻塞队列等待
+		if(CURRENT_THREADS == INIT_THREADS && addTaskToQueue(task));
 		//当前的线程数大于线程池允许的最大数量，默认采用AbortPolicy()策略
 		if(CURRENT_THREADS >= MAX_THREADS && handler());
-		
-		try {
-			CURRENT_THREADS++;
-			this.takeQueue.enqueue(task);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 	}
 	
 	public boolean handler(){
@@ -96,18 +93,37 @@ public class ThreadPool {
 
 	public synchronized void stop(){
 		this.isStoped = true;
-		for(PoolThread thread : threads){
+		for(WorkThread thread : threads){
 			thread.stop();
+		}
+	}
+	
+	//再创建一个核心线程
+	private synchronized boolean addOneThread(){
+		return threads.add(new WorkThread(takeQueue));
+	}
+	
+	//将任务放进阻塞队列
+	private boolean addTaskToQueue(Runnable task){
+		boolean addSuccess = true;
+		synchronized (this) {
+			try {
+				addSuccess = this.takeQueue.enqueue(task);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} finally{
+				return addSuccess;
+			}
 		}
 	}
 }
 
-class PoolThread extends Thread{
+class WorkThread extends Thread{
 	
 	private BlockingQueue takeQueue = null;
 	private boolean isStoped = false;
 	
-	public PoolThread(BlockingQueue queue){
+	public WorkThread(BlockingQueue queue){
 		this.takeQueue = queue;
 	}
 	

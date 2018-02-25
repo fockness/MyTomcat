@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor.AbortPolicy;
 
+import sun.misc.Unsafe;
+
 /*BlockingQueue的简单实现
  *使用了生产者消费者模型 
  */
@@ -16,29 +18,35 @@ public class BlockingQueue<T> {
 	private int limit = 0;
 	
 	//默认删除的队列元数
-	private int index = 0;
+	private volatile int index = 0;
 	
 	public BlockingQueue(int limit){
 		this.limit = limit;
 	}
 	
-	public synchronized void enqueue(Object item) throws InterruptedException{
-		while(this.queue.size() == this.limit){
-			wait();
+	public boolean enqueue(Object item) throws InterruptedException{
+		synchronized(this){
+			while(this.queue.size() == this.limit){
+				wait();
+			}
+			if(this.queue.size() == 0) notifyAll();
+			return queue.add(item);
 		}
-		if(this.queue.size() == 0) notifyAll();
-		queue.add(item);
 	}
 	
-	public synchronized Object dequeue() throws InterruptedException{
-		while(this.queue.size() == 0){
-			wait();
+	public  Object dequeue() throws InterruptedException{
+		synchronized(this){
+			while(this.queue.size() == 0){
+				wait();
+			}
+			if(this.queue.size() == this.limit) notifyAll();
+			return queue.remove(0);
 		}
-		if(this.queue.size() == this.limit) notifyAll();
-		return queue.remove(0);
 	}
 	
 	public boolean reduceQueue(){
-		return queue.remove(index) != null;
+		synchronized (this) {
+			return queue.remove(index) != null;
+		}
 	}
 }
